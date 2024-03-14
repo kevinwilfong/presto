@@ -204,6 +204,12 @@ class PrestoServer {
 
   std::shared_ptr<CoordinatorDiscoverer> coordinatorDiscoverer_;
 
+  // Executor for query engine driver executions.
+  // Ensure this is the last pool to get destructed, as it may
+  // hold ownership of a Driver in its task queue even after
+  // it's been joined.
+  std::shared_ptr<folly::CPUThreadPoolExecutor> driverExecutor_;
+
   // Executor for background writing into SSD cache.
   std::unique_ptr<folly::IOThreadPoolExecutor> cacheExecutor_;
 
@@ -218,9 +224,6 @@ class PrestoServer {
 
   // Executor for HTTP request processing after dispatching
   std::shared_ptr<folly::CPUThreadPoolExecutor> httpSrvCpuExecutor_;
-
-  // Executor for query engine driver executions.
-  std::shared_ptr<folly::CPUThreadPoolExecutor> driverExecutor_;
 
   // Executor for spilling.
   std::shared_ptr<folly::CPUThreadPoolExecutor> spillerExecutor_;
