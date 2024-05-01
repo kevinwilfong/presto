@@ -315,15 +315,25 @@ public final class ArrayJoin
             Slice nullReplacement)
     {
         int numElements = arrayBlock.getPositionCount();
+        boolean first = true;
 
         for (int i = 0; i < numElements; i++) {
-            if (arrayBlock.isNull(i)) {
-                if (nullReplacement != null) {
-                    blockBuilder.writeBytes(nullReplacement, 0, nullReplacement.length());
-                }
-                else {
-                    continue;
-                }
+            boolean isNull = arrayBlock.isNull(i);
+
+            if (isNull && nullReplacement == null) {
+                continue;
+            }
+
+            if (first) {
+                first = false;
+            }
+            else {
+                blockBuilder.writeBytes(delimiter, 0, delimiter.length());
+            }
+
+
+            if (isNull) {
+                blockBuilder.writeBytes(nullReplacement, 0, nullReplacement.length());
             }
             else {
                 try {
@@ -335,10 +345,6 @@ public final class ArrayJoin
                     blockBuilder.closeEntry();
                     throw new PrestoException(GENERIC_INTERNAL_ERROR, "Error casting array element to VARCHAR", throwable);
                 }
-            }
-
-            if (i != numElements - 1) {
-                blockBuilder.writeBytes(delimiter, 0, delimiter.length());
             }
         }
 
